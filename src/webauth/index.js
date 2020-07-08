@@ -29,11 +29,12 @@ const callbackUri = domain => {
  * @see https://auth0.com/docs/api-auth/grant/authorization-code-pkce
  */
 export default class WebAuth {
-  constructor(auth) {
+  constructor(auth, redirectUri) {
     this.client = auth;
     const {baseUrl, clientId, domain} = auth;
     this.domain = domain;
     this.clientId = clientId;
+    this.redirectUri = redirectUri;
     this.agent = new Agent();
   }
 
@@ -61,9 +62,8 @@ export default class WebAuth {
    * @memberof WebAuth
    */
   authorize(parameters = {}, options = {}) {
-    const {clientId, domain, client, agent} = this;
+    const {clientId, domain, client, redirectUri = callbackUri(domain), agent} = this;
     return agent.newTransaction().then(({state, verifier, ...defaults}) => {
-      const redirectUri = callbackUri(domain);
       const expectedState = parameters.state || state;
       let query = {
         ...defaults,
@@ -75,7 +75,7 @@ export default class WebAuth {
       };
       const authorizeUrl = this.client.authorizeUrl(query);
       return agent
-        .show(authorizeUrl, options.ephemeralSession)
+        .show({ url: authorizeUrl, ephemeralSession: options.ephemeralSession, redirectUri })
         .then(redirectUrl => {
           if (!redirectUrl || !redirectUrl.startsWith(redirectUri)) {
             throw new AuthError({
@@ -130,11 +130,11 @@ export default class WebAuth {
    * @memberof WebAuth
    */
   clearSession(options = {}) {
-    const {client, agent, domain, clientId} = this;
+    const {client, agent, domain, clientId, redirectUri = callbackUri(domain)} = this;
     options.clientId = clientId;
-    options.returnTo = callbackUri(domain);
+    options.returnTo = redirectUri;
     options.federated = options.federated || false;
     const logoutUrl = client.logoutUrl(options);
-    return agent.show(logoutUrl, false, true);
+    return agent.show({ url: logoutUrl, ephemeralSession: false, closeOnLoad: true, redirectUri });
   }
 }

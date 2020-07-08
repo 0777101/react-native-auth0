@@ -19,9 +19,9 @@ export default class Auth0 {
    * @memberof Auth0
    */
   constructor(options = {}) {
-    const { domain, clientId, ...extras } = options;
+    const { domain, clientId, redirectUri, ...extras } = options;
     this.auth = new Auth({baseUrl: domain, clientId, ...extras});
-    this.webAuth = new WebAuth(this.auth);
+    this.webAuth = new WebAuth(this.auth, redirectUri);
     this.options = options;
   }
 

@@ -1,7 +1,7 @@
 import {NativeModules, Linking, Platform} from 'react-native';
 
 export default class Agent {
-  show(url, ephemeralSession = false, closeOnLoad = false) {
+  show({url, ephemeralSession = false, closeOnLoad = false}) {
     if (!NativeModules.A0Auth0) {
       return Promise.reject(
         new Error(
